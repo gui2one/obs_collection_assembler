@@ -83,21 +83,26 @@ func copy(src, dst string) (int64, error) {
 }
 
 func main() {
+	fmt.Println(len(os.Args), os.Args)
 
-	var json_path = "C:/gui2one/OBS_scene_collections/TEST_SCENE.json"
+	if len(os.Args) < 2 {
+		log.Fatal("No JSON file path provided, I need an argument !")
+	}
+
+	// var json_path = "C:/gui2one/OBS_scene_collections/TEST_SCENE.json"
+	var json_path = os.Args[1]
 	root_dir := filepath.Dir(json_path)
 	collection_name := strings.Split(filepath.Base(json_path), ".")[0]
-	fmt.Println("root dir is : " + root_dir)
+	fmt.Println("root dir is     : " + root_dir)
 	fmt.Println("COllection name : " + collection_name)
 
 	collection_dir := root_dir + "/" + collection_name
 	os.Mkdir(collection_dir, os.ModeAppend)
 	var dat = readJSON(json_path)
 
-	fmt.Println("OK")
 	filePaths := extractFilePaths(dat)
 
-	fmt.Println("File Paths:")
+	fmt.Println("Found File Paths:")
 	for _, path := range filePaths {
 		fmt.Println(path)
 		file_exists := checkFileExists(path)
