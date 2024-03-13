@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+
 	"fmt"
 	"io"
 	"log"
@@ -83,6 +84,7 @@ func copy(src, dst string) (int64, error) {
 }
 
 func main() {
+
 	fmt.Println(len(os.Args), os.Args)
 
 	if len(os.Args) < 2 {
