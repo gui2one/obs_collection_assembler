@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +9,9 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"example.com/obs_collection_assembler/utils"
+	"github.com/fatih/color"
 )
 
 func extractFilePaths(data interface{}) []string {
@@ -35,22 +36,6 @@ func extractFilePaths(data interface{}) []string {
 	}
 
 	return paths
-}
-
-func readJSON(json_path string) map[string]interface{} {
-	var data, err = os.ReadFile(json_path)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		var json_data map[string]interface{}
-		err := json.Unmarshal(data, &json_data)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return json_data
-	}
-
-	return nil
 }
 
 func checkFileExists(filePath string) bool {
@@ -83,9 +68,27 @@ func copy(src, dst string) (int64, error) {
 	return nBytes, err
 }
 
-func main() {
+func filter_paths(paths []string) []string {
+	var good_paths []string
+	for _, path := range paths {
+		if checkFileExists(path) {
+			good_paths = append(good_paths, path)
+		}
+	}
+	return good_paths
+}
 
-	fmt.Println(len(os.Args), os.Args)
+func replacePaths(base_str string, paths []string, root_path string) string {
+	var final_str = base_str
+	for _, path := range paths {
+		base_name := filepath.Base(path)
+		final_str = strings.Replace(final_str, path, root_path+"/"+base_name, -1)
+	}
+
+	return final_str
+}
+
+func main() {
 
 	if len(os.Args) < 2 {
 		log.Fatal("No JSON file path provided, I need an argument !")
@@ -96,16 +99,20 @@ func main() {
 	root_dir := filepath.Dir(json_path)
 	collection_name := strings.Split(filepath.Base(json_path), ".")[0]
 	fmt.Println("root dir is     : " + root_dir)
-	fmt.Println("COllection name : " + collection_name)
+	fmt.Println("Collection name : " + collection_name)
 
 	collection_dir := root_dir + "/" + collection_name
 	os.Mkdir(collection_dir, os.ModeAppend)
-	var dat = readJSON(json_path)
 
-	filePaths := extractFilePaths(dat)
+	var dat = utils.ReadJsonToStringMap(json_path)
 
+	file_paths := extractFilePaths(dat)
+
+	good_paths := filter_paths(file_paths)
+
+	fmt.Printf("Good paths are : \n %v\n\n", good_paths)
 	fmt.Println("Found File Paths:")
-	for _, path := range filePaths {
+	for _, path := range good_paths {
 		fmt.Println(path)
 		file_exists := checkFileExists(path)
 
@@ -115,5 +122,16 @@ func main() {
 			copy(path, collection_dir+"/"+filepath.Base(path))
 		}
 	}
+
+	data, err := utils.ReadJsonToString(json_path)
+	if err != nil {
+		log.Printf("Problem reading json file ->  %s", json_path)
+	}
+
+	str_with_replaced_paths := replacePaths(data, good_paths, collection_name)
+
+	converted_json_path := filepath.Join(root_dir, collection_name+"_converted.json")
+	os.WriteFile(converted_json_path, []byte(str_with_replaced_paths), os.ModeAppend)
+	color.Green("Wrote %s to disk\n", converted_json_path)
 
 }
