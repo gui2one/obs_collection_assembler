@@ -93,7 +93,8 @@ func main() {
 	filename, err := dialog.File().Filter("JSON file", "json").Load()
 
 	if err != nil {
-		log.Fatal("Cannot load the file")
+		log.Println("Aborting ...")
+		return
 	}
 
 	// var json_path = "C:/gui2one/OBS_scene_collections/TEST_SCENE.json"
