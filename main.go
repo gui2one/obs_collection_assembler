@@ -12,6 +12,7 @@ import (
 
 	"example.com/obs_collection_assembler/utils"
 	"github.com/fatih/color"
+	"github.com/sqweek/dialog"
 )
 
 func extractFilePaths(data interface{}) []string {
@@ -89,13 +90,14 @@ func replacePaths(base_str string, paths []string, root_path string) string {
 }
 
 func main() {
+	filename, err := dialog.File().Filter("JSON file", "json").Load()
 
-	if len(os.Args) < 2 {
-		log.Fatal("No JSON file path provided, I need an argument !")
+	if err != nil {
+		log.Fatal("Cannot load the file")
 	}
 
 	// var json_path = "C:/gui2one/OBS_scene_collections/TEST_SCENE.json"
-	var json_path = os.Args[1]
+	var json_path = filename
 	root_dir := filepath.Dir(json_path)
 	collection_name := strings.Split(filepath.Base(json_path), ".")[0]
 	fmt.Println("root dir is     : " + root_dir)
